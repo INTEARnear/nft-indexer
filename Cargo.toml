@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-inindexer = { path = "../inindexer", features = [ "fastnear-data-server" ] }
+inindexer = { git = "https://github.com/INTEARnear/inindexer.git", features = [ "fastnear-data-server" ] }
 async-trait = "0.1.80"
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 log = "0.4.21"
