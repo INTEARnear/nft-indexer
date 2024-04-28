@@ -200,7 +200,7 @@ async fn main() {
         IndexerOptions {
             range: if std::env::args().len() > 1 {
                 // For debugging
-                let msg = "Usage: `nft-indexer` or `nft-indexer [start-block] [end-block]`";
+                let msg = "Usage: `nft_indexer` or `nft_indexer [start-block] [end-block]`";
                 BlockIterator::iterator(
                     std::env::args()
                         .nth(1)
