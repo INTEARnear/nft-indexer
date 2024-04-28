@@ -11,7 +11,7 @@ use inindexer::near_indexer_primitives::types::AccountId;
 use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::{
-    run_indexer, BlockIterator, CompletedTransaction, Indexer, IndexerOptions,
+    run_indexer, AutoContinue, BlockIterator, CompletedTransaction, Indexer, IndexerOptions,
     PreprocessTransactionsSettings,
 };
 use redis::aio::MultiplexedConnection;
@@ -98,76 +98,70 @@ struct PushToRedisStream {
 #[async_trait]
 impl NftEventHandler for PushToRedisStream {
     async fn handle_mint(&mut self, mint: NftMintEvent, context: EventContext) {
-        for token_id in mint.token_ids {
-            let response: String = self
-                .connection
-                .xadd_maxlen(
-                    "nft_mint",
-                    StreamMaxlen::Approx(self.max_blocks),
-                    &format!("{}-*", context.block_height),
-                    &[
-                        ("owner_id", mint.owner_id.as_str()),
-                        ("token_id", token_id.as_str()),
-                        ("memo", mint.memo.as_deref().unwrap_or("")),
-                        ("txid", context.txid.to_string().as_str()),
-                        ("block_height", context.block_height.to_string().as_str()),
-                        ("sender_id", context.sender_id.as_str()),
-                        ("contract_id", context.contract_id.as_str()),
-                    ],
-                )
-                .await
-                .unwrap();
-            log::debug!("Adding to stream: {response}");
-        }
+        let response: String = self
+            .connection
+            .xadd_maxlen(
+                "nft_mint",
+                StreamMaxlen::Approx(self.max_blocks),
+                &format!("{}-*", context.block_height),
+                &[
+                    ("owner_id", mint.owner_id.as_str()),
+                    ("token_ids", mint.token_ids.join(",").as_str()),
+                    ("memo", mint.memo.as_deref().unwrap_or("")),
+                    ("txid", context.txid.to_string().as_str()),
+                    ("block_height", context.block_height.to_string().as_str()),
+                    ("sender_id", context.sender_id.as_str()),
+                    ("contract_id", context.contract_id.as_str()),
+                ],
+            )
+            .await
+            .unwrap();
+        log::debug!("Adding to stream: {response}");
     }
 
     async fn handle_transfer(&mut self, transfer: NftTransferEvent, context: EventContext) {
-        for token_id in transfer.token_ids {
-            let response: String = self
-                .connection
-                .xadd_maxlen(
-                    "nft_transfer",
-                    StreamMaxlen::Approx(self.max_blocks),
-                    &format!("{}-*", context.block_height),
-                    &[
-                        ("old_owner_id", transfer.old_owner_id.as_str()),
-                        ("new_owner_id", transfer.new_owner_id.as_str()),
-                        ("token_id", token_id.as_str()),
-                        ("memo", transfer.memo.as_deref().unwrap_or("")),
-                        ("txid", context.txid.to_string().as_str()),
-                        ("block_height", context.block_height.to_string().as_str()),
-                        ("sender_id", context.sender_id.as_str()),
-                        ("contract_id", context.contract_id.as_str()),
-                    ],
-                )
-                .await
-                .unwrap();
-            log::debug!("Adding to stream: {response}");
-        }
+        let response: String = self
+            .connection
+            .xadd_maxlen(
+                "nft_transfer",
+                StreamMaxlen::Approx(self.max_blocks),
+                &format!("{}-*", context.block_height),
+                &[
+                    ("old_owner_id", transfer.old_owner_id.as_str()),
+                    ("new_owner_id", transfer.new_owner_id.as_str()),
+                    ("token_ids", transfer.token_ids.join(",").as_str()),
+                    ("memo", transfer.memo.as_deref().unwrap_or("")),
+                    ("txid", context.txid.to_string().as_str()),
+                    ("block_height", context.block_height.to_string().as_str()),
+                    ("sender_id", context.sender_id.as_str()),
+                    ("contract_id", context.contract_id.as_str()),
+                ],
+            )
+            .await
+            .unwrap();
+        log::debug!("Adding to stream: {response}");
     }
 
-    async fn handle_burn(&mut self, burn: NftBurnEvent, _context: EventContext) {
-        for token_id in burn.token_ids {
-            let response: String = self
-                .connection
-                .xadd_maxlen(
-                    "nft_burn",
-                    StreamMaxlen::Approx(self.max_blocks),
-                    &format!("{}-*", _context.block_height),
-                    &[
-                        ("owner_id", burn.owner_id.as_str()),
-                        ("token_id", token_id.as_str()),
-                        ("memo", burn.memo.as_deref().unwrap_or("")),
-                        ("txid", _context.txid.to_string().as_str()),
-                        ("block_height", _context.block_height.to_string().as_str()),
-                        ("sender_id", _context.sender_id.as_str()),
-                        ("contract_id", _context.contract_id.as_str()),
-                    ],
-                )
-                .await
-                .unwrap();
-            log::debug!("Adding to stream: {response}");
-        }
+    async fn handle_burn(&mut self, burn: NftBurnEvent, context: EventContext) {
+        let response: String = self
+            .connection
+            .xadd_maxlen(
+                "nft_burn",
+                StreamMaxlen::Approx(self.max_blocks),
+                &format!("{}-*", context.block_height),
+                &[
+                    ("owner_id", burn.owner_id.as_str()),
+                    ("token_ids", burn.token_ids.join(",").as_str()),
+                    ("memo", burn.memo.as_deref().unwrap_or("")),
+                    ("txid", context.txid.to_string().as_str()),
+                    ("block_height", context.block_height.to_string().as_str()),
+                    ("sender_id", context.sender_id.as_str()),
+                    ("contract_id", context.contract_id.as_str()),
+                ],
+            )
+            .await
+            .unwrap();
+        log::debug!("Adding to stream: {response}");
     }
 }
 
@@ -204,10 +198,29 @@ async fn main() {
         &mut indexer,
         FastNearDataServerProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(117_189_143..=117_189_146),
+            range: if std::env::args().len() > 1 {
+                // For debugging
+                let msg = "Usage: `nft-indexer` or `nft-indexer [start-block] [end-block]`";
+                BlockIterator::iterator(
+                    std::env::args()
+                        .nth(1)
+                        .expect(msg)
+                        .replace(['_', ',', ' ', '.'], "")
+                        .parse()
+                        .expect(msg)
+                        ..=std::env::args()
+                            .nth(2)
+                            .expect(msg)
+                            .replace(['_', ',', ' ', '.'], "")
+                            .parse()
+                            .expect(msg),
+                )
+            } else {
+                BlockIterator::AutoContinue(AutoContinue::default())
+            },
             preprocess_transactions: Some(PreprocessTransactionsSettings {
+                prefetch_blocks: if cfg!(debug_assertions) { 0 } else { 100 },
                 postfetch_blocks: 0,
-                ..Default::default()
             }),
             ..Default::default()
         },
