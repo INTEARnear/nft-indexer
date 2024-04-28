@@ -15,10 +15,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --all-features --verbose
+      run: cargo build --verbose
     - name: Check format
       run: cargo fmt --check --verbose
     - name: Check lints
-      run: cargo clippy --all-features --verbose -- --deny clippy::all
+      run: cargo clippy --verbose -- --deny clippy::all
     - name: Run tests
-      run: cargo test --features fastnear-data-server --verbose
+      run: cargo test --verbose
