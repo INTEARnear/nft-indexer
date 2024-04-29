@@ -184,7 +184,6 @@ async fn detects_burns() {
     .await
     .unwrap();
 
-    eprintln!("{:?}", indexer.handler.burn_events);
     assert_eq!(
         *indexer
             .handler
