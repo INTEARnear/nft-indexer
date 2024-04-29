@@ -11,7 +11,7 @@ use inindexer::near_indexer_primitives::types::AccountId;
 use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::{
-    run_indexer, AutoContinue, BlockIterator, CompletedTransaction, Indexer, IndexerOptions,
+    run_indexer, AutoContinue, BlockIterator, CompleteTransaction, Indexer, IndexerOptions,
     PreprocessTransactionsSettings,
 };
 use redis::aio::MultiplexedConnection;
@@ -35,7 +35,7 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
 
     async fn on_transaction(
         &mut self,
-        transaction: &CompletedTransaction,
+        transaction: &CompleteTransaction,
         _block: &StreamerMessage,
     ) -> Result<(), Self::Error> {
         for receipt in transaction.receipts.iter() {
