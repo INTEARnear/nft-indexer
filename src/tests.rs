@@ -34,7 +34,7 @@ async fn detects_mints() {
         mint_events: HashMap::new(),
     };
 
-    let mut indexer = NftIndexer { handler };
+    let mut indexer = NftIndexer(handler);
 
     run_indexer(
         &mut indexer,
@@ -53,7 +53,7 @@ async fn detects_mints() {
 
     assert_eq!(
         *indexer
-            .handler
+            .0
             .mint_events
             .get(&"minter1.sharddog.near".parse::<AccountId>().unwrap())
             .unwrap(),
@@ -100,7 +100,7 @@ async fn detects_transfers() {
         transfer_events: HashMap::new(),
     };
 
-    let mut indexer = NftIndexer { handler };
+    let mut indexer = NftIndexer(handler);
 
     run_indexer(
         &mut indexer,
@@ -119,7 +119,7 @@ async fn detects_transfers() {
 
     assert_eq!(
         *indexer
-            .handler
+            .0
             .transfer_events
             .get(&"slimegirl.near".parse::<AccountId>().unwrap())
             .unwrap(),
@@ -167,7 +167,7 @@ async fn detects_burns() {
         burn_events: HashMap::new(),
     };
 
-    let mut indexer = NftIndexer { handler };
+    let mut indexer = NftIndexer(handler);
 
     run_indexer(
         &mut indexer,
@@ -186,7 +186,7 @@ async fn detects_burns() {
 
     assert_eq!(
         *indexer
-            .handler
+            .0
             .burn_events
             .get(&"bonehedz.near".parse::<AccountId>().unwrap())
             .unwrap(),
