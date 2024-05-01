@@ -48,7 +48,7 @@ impl NftEventHandler for PushToRedisStream {
             .xadd_maxlen(
                 "nft_transfer",
                 StreamMaxlen::Approx(self.max_stream_size),
-                &format!("{}-*", context.block_height),
+                "*",
                 &[
                     ("old_owner_id", transfer.event.old_owner_id.as_str()),
                     ("new_owner_id", transfer.event.new_owner_id.as_str()),
@@ -82,7 +82,7 @@ impl NftEventHandler for PushToRedisStream {
             .xadd_maxlen(
                 "nft_burn",
                 StreamMaxlen::Approx(self.max_stream_size),
-                &format!("{}-*", context.block_height),
+                "*",
                 &[
                     ("owner_id", burn.owner_id.as_str()),
                     ("token_ids", burn.token_ids.join(",").as_str()),
