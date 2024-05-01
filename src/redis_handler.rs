@@ -26,7 +26,7 @@ impl NftEventHandler for PushToRedisStream {
             .xadd_maxlen(
                 "nft_mint",
                 StreamMaxlen::Approx(self.max_stream_size),
-                &format!("{}-*", context.block_height),
+                "*",
                 &[
                     ("owner_id", mint.owner_id.as_str()),
                     ("token_ids", mint.token_ids.join(",").as_str()),
