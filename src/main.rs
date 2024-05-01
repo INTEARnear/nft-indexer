@@ -180,6 +180,7 @@ struct EventContext {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     simple_logger::SimpleLogger::new()
         .with_level(log::LevelFilter::Info)
         .with_module_level("inindexer::performance", log::LevelFilter::Debug)
