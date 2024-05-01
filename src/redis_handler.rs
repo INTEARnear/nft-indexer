@@ -1,8 +1,8 @@
 use async_trait::async_trait;
-use inindexer::indexer_utils::{NftBurnEvent, NftMintEvent, NftTransferEvent};
+use inindexer::near_utils::{NftBurnEvent, NftMintEvent};
 use redis::{aio::MultiplexedConnection, streams::StreamMaxlen, AsyncCommands};
 
-use crate::{EventContext, NftEventHandler};
+use crate::{EventContext, ExtendedNftTransferEvent, NftEventHandler};
 
 pub struct PushToRedisStream {
     connection: MultiplexedConnection,
@@ -33,7 +33,7 @@ impl NftEventHandler for PushToRedisStream {
                     ("memo", mint.memo.as_deref().unwrap_or("")),
                     ("txid", context.txid.to_string().as_str()),
                     ("block_height", context.block_height.to_string().as_str()),
-                    ("sender_id", context.sender_id.as_str()),
+                    ("tx_sender_id", context.tx_sender_id.as_str()),
                     ("contract_id", context.contract_id.as_str()),
                 ],
             )
@@ -42,7 +42,7 @@ impl NftEventHandler for PushToRedisStream {
         log::debug!("Adding to stream: {response}");
     }
 
-    async fn handle_transfer(&mut self, transfer: NftTransferEvent, context: EventContext) {
+    async fn handle_transfer(&mut self, transfer: ExtendedNftTransferEvent, context: EventContext) {
         let response: String = self
             .connection
             .xadd_maxlen(
@@ -50,13 +50,24 @@ impl NftEventHandler for PushToRedisStream {
                 StreamMaxlen::Approx(self.max_blocks),
                 &format!("{}-*", context.block_height),
                 &[
-                    ("old_owner_id", transfer.old_owner_id.as_str()),
-                    ("new_owner_id", transfer.new_owner_id.as_str()),
-                    ("token_ids", transfer.token_ids.join(",").as_str()),
-                    ("memo", transfer.memo.as_deref().unwrap_or("")),
+                    ("old_owner_id", transfer.event.old_owner_id.as_str()),
+                    ("new_owner_id", transfer.event.new_owner_id.as_str()),
+                    ("token_ids", transfer.event.token_ids.join(",").as_str()),
+                    ("memo", transfer.event.memo.as_deref().unwrap_or("")),
+                    (
+                        "price_near",
+                        transfer
+                            .trade
+                            .prices_near
+                            .into_iter()
+                            .map(|price| price.unwrap_or_default().to_string())
+                            .collect::<Vec<String>>()
+                            .join(",")
+                            .as_str(),
+                    ),
                     ("txid", context.txid.to_string().as_str()),
                     ("block_height", context.block_height.to_string().as_str()),
-                    ("sender_id", context.sender_id.as_str()),
+                    ("tx_sender_id", context.tx_sender_id.as_str()),
                     ("contract_id", context.contract_id.as_str()),
                 ],
             )
@@ -78,7 +89,7 @@ impl NftEventHandler for PushToRedisStream {
                     ("memo", burn.memo.as_deref().unwrap_or("")),
                     ("txid", context.txid.to_string().as_str()),
                     ("block_height", context.block_height.to_string().as_str()),
-                    ("sender_id", context.sender_id.as_str()),
+                    ("tx_sender_id", context.tx_sender_id.as_str()),
                     ("contract_id", context.contract_id.as_str()),
                 ],
             )
