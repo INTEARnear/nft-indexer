@@ -55,7 +55,7 @@ impl NftEventHandler for PushToRedisStream {
                     ("token_ids", transfer.event.token_ids.join(",").as_str()),
                     ("memo", transfer.event.memo.as_deref().unwrap_or("")),
                     (
-                        "price_near",
+                        "prices_near",
                         transfer
                             .trade
                             .prices_near
