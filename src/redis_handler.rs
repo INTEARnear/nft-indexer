@@ -6,14 +6,14 @@ use crate::{EventContext, ExtendedNftTransferEvent, NftEventHandler};
 
 pub struct PushToRedisStream {
     connection: MultiplexedConnection,
-    max_blocks: usize,
+    max_stream_size: usize,
 }
 
 impl PushToRedisStream {
-    pub fn new(connection: MultiplexedConnection, max_blocks: usize) -> Self {
+    pub fn new(connection: MultiplexedConnection, max_stream_size: usize) -> Self {
         Self {
             connection,
-            max_blocks,
+            max_stream_size,
         }
     }
 }
@@ -25,7 +25,7 @@ impl NftEventHandler for PushToRedisStream {
             .connection
             .xadd_maxlen(
                 "nft_mint",
-                StreamMaxlen::Approx(self.max_blocks),
+                StreamMaxlen::Approx(self.max_stream_size),
                 &format!("{}-*", context.block_height),
                 &[
                     ("owner_id", mint.owner_id.as_str()),
@@ -47,7 +47,7 @@ impl NftEventHandler for PushToRedisStream {
             .connection
             .xadd_maxlen(
                 "nft_transfer",
-                StreamMaxlen::Approx(self.max_blocks),
+                StreamMaxlen::Approx(self.max_stream_size),
                 &format!("{}-*", context.block_height),
                 &[
                     ("old_owner_id", transfer.event.old_owner_id.as_str()),
@@ -81,7 +81,7 @@ impl NftEventHandler for PushToRedisStream {
             .connection
             .xadd_maxlen(
                 "nft_burn",
-                StreamMaxlen::Approx(self.max_blocks),
+                StreamMaxlen::Approx(self.max_stream_size),
                 &format!("{}-*", context.block_height),
                 &[
                     ("owner_id", burn.owner_id.as_str()),
