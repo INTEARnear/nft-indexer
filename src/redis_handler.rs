@@ -1,16 +1,16 @@
 use async_trait::async_trait;
 use inindexer::near_utils::{NftBurnEvent, NftMintEvent};
-use redis::{aio::MultiplexedConnection, streams::StreamMaxlen, AsyncCommands};
+use redis::{streams::StreamMaxlen, AsyncCommands};
 
 use crate::{EventContext, ExtendedNftTransferEvent, NftEventHandler};
 
-pub struct PushToRedisStream {
-    connection: MultiplexedConnection,
+pub struct PushToRedisStream<C: AsyncCommands + Sync> {
+    connection: C,
     max_stream_size: usize,
 }
 
-impl PushToRedisStream {
-    pub fn new(connection: MultiplexedConnection, max_stream_size: usize) -> Self {
+impl<C: AsyncCommands + Sync> PushToRedisStream<C> {
+    pub fn new(connection: C, max_stream_size: usize) -> Self {
         Self {
             connection,
             max_stream_size,
@@ -19,7 +19,7 @@ impl PushToRedisStream {
 }
 
 #[async_trait]
-impl NftEventHandler for PushToRedisStream {
+impl<C: AsyncCommands + Sync> NftEventHandler for PushToRedisStream<C> {
     async fn handle_mint(&mut self, mint: NftMintEvent, context: EventContext) {
         let response: String = self
             .connection

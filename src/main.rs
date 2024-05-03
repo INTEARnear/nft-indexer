@@ -18,6 +18,7 @@ use inindexer::{
     run_indexer, AutoContinue, BlockIterator, CompleteTransaction, Indexer, IndexerOptions,
     PreprocessTransactionsSettings, TransactionReceipt,
 };
+use redis::aio::ConnectionManager;
 use redis_handler::PushToRedisStream;
 use serde::{Deserialize, Serialize};
 
@@ -191,7 +192,7 @@ async fn main() {
         std::env::var("REDIS_URL").expect("No $REDIS_URL environment variable set"),
     )
     .unwrap();
-    let connection = client.get_multiplexed_tokio_connection().await.unwrap();
+    let connection = ConnectionManager::new(client).await.unwrap();
 
     let mut indexer = NftIndexer(PushToRedisStream::new(connection, 10_000));
 
