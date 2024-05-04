@@ -8,7 +8,9 @@ use inindexer::{
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 
-use crate::{EventContext, ExtendedNftTransferEvent, NftEventHandler, NftIndexer, NftTradeDetails};
+use nft_indexer::{
+    EventContext, ExtendedNftTransferEvent, NftEventHandler, NftIndexer, NftTradeDetails,
+};
 
 #[tokio::test]
 async fn detects_mints() {
@@ -69,7 +71,10 @@ async fn detects_mints() {
                 memo: None
             },
             EventContext {
-                txid: "9TkiwECEL4AMsA6KmuhGskkNFT5Mr6ub6YJJAza8vbGs"
+                transaction_id: "9TkiwECEL4AMsA6KmuhGskkNFT5Mr6ub6YJJAza8vbGs"
+                    .parse()
+                    .unwrap(),
+                receipt_id: "DrrW649B53RQaejPgRqiKM74MyT35JPk9cbkokkUGKdf"
                     .parse()
                     .unwrap(),
                 block_height: 117189144,
@@ -141,7 +146,10 @@ async fn detects_transfers() {
                 memo: None
             },
             EventContext {
-                txid: "95HkmF7ajYPSSJnhsGL7C4k8sF5jmdrp4ciiTcK7xuYr"
+                transaction_id: "95HkmF7ajYPSSJnhsGL7C4k8sF5jmdrp4ciiTcK7xuYr"
+                    .parse()
+                    .unwrap(),
+                receipt_id: "AhbWgoat1L23YgrzrWE6U2FcM1n5uqRZ8cKxkxevdFJa"
                     .parse()
                     .unwrap(),
                 block_height: 117_487_094,
@@ -212,7 +220,10 @@ async fn detects_burns() {
                 memo: None
             },
             EventContext {
-                txid: "9k7kE7PU1YqrAxzdwKw8P3u8eNeazCZpMWStD89XFBpZ"
+                transaction_id: "9k7kE7PU1YqrAxzdwKw8P3u8eNeazCZpMWStD89XFBpZ"
+                    .parse()
+                    .unwrap(),
+                receipt_id: "4EVVVu8VR72Gd4cfhxworayV1CuA29DL9ndE7KfdRcKN"
                     .parse()
                     .unwrap(),
                 block_height: 117752572,
@@ -292,7 +303,10 @@ async fn detects_paras_trade() {
                 }
             },
             EventContext {
-                txid: "5aPiGXDKi696Af6imrPMF3aQozQGZy119uM6WKRAqbVH"
+                transaction_id: "5aPiGXDKi696Af6imrPMF3aQozQGZy119uM6WKRAqbVH"
+                    .parse()
+                    .unwrap(),
+                receipt_id: "Cy8NNUDiDBmKyQ714CoyYV2MMzwxFuQoeVZnvDsCtdeJ"
                     .parse()
                     .unwrap(),
                 block_height: 117998765,
@@ -372,7 +386,10 @@ async fn detects_mintbase_trade() {
                 }
             },
             EventContext {
-                txid: "HLdiNk9QFS2AdRLNrWGfB6TzSHFRUy9TpmSjJK3escHa"
+                transaction_id: "HLdiNk9QFS2AdRLNrWGfB6TzSHFRUy9TpmSjJK3escHa"
+                    .parse()
+                    .unwrap(),
+                receipt_id: "Cvn41HotTFo7TkacdzPyKtzMhzbXRFY64kmK6zF9GzKx"
                     .parse()
                     .unwrap(),
                 block_height: 116934526,

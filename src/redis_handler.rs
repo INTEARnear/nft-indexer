@@ -26,15 +26,10 @@ impl<C: AsyncCommands + Sync> NftEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "nft_mint",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("owner_id", mint.owner_id.as_str()),
-                    ("token_ids", mint.token_ids.join(",").as_str()),
-                    ("memo", mint.memo.as_deref().unwrap_or("")),
-                    ("txid", context.txid.to_string().as_str()),
-                    ("block_height", context.block_height.to_string().as_str()),
-                    ("tx_sender_id", context.tx_sender_id.as_str()),
-                    ("contract_id", context.contract_id.as_str()),
+                    ("mint", serde_json::to_string(&mint).unwrap().as_str()),
+                    ("context", serde_json::to_string(&context).unwrap().as_str()),
                 ],
             )
             .await
@@ -48,27 +43,13 @@ impl<C: AsyncCommands + Sync> NftEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "nft_transfer",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("old_owner_id", transfer.event.old_owner_id.as_str()),
-                    ("new_owner_id", transfer.event.new_owner_id.as_str()),
-                    ("token_ids", transfer.event.token_ids.join(",").as_str()),
-                    ("memo", transfer.event.memo.as_deref().unwrap_or("")),
                     (
-                        "prices_near",
-                        transfer
-                            .trade
-                            .prices_near
-                            .into_iter()
-                            .map(|price| price.unwrap_or_default().to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                            .as_str(),
+                        "transfer",
+                        serde_json::to_string(&transfer).unwrap().as_str(),
                     ),
-                    ("txid", context.txid.to_string().as_str()),
-                    ("block_height", context.block_height.to_string().as_str()),
-                    ("tx_sender_id", context.tx_sender_id.as_str()),
-                    ("contract_id", context.contract_id.as_str()),
+                    ("context", serde_json::to_string(&context).unwrap().as_str()),
                 ],
             )
             .await
@@ -82,15 +63,10 @@ impl<C: AsyncCommands + Sync> NftEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "nft_burn",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("owner_id", burn.owner_id.as_str()),
-                    ("token_ids", burn.token_ids.join(",").as_str()),
-                    ("memo", burn.memo.as_deref().unwrap_or("")),
-                    ("txid", context.txid.to_string().as_str()),
-                    ("block_height", context.block_height.to_string().as_str()),
-                    ("tx_sender_id", context.tx_sender_id.as_str()),
-                    ("contract_id", context.contract_id.as_str()),
+                    ("burn", serde_json::to_string(&burn).unwrap().as_str()),
+                    ("context", serde_json::to_string(&context).unwrap().as_str()),
                 ],
             )
             .await
