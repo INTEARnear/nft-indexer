@@ -17,14 +17,28 @@ use serde::{Deserialize, Serialize};
 
 #[async_trait]
 pub trait NftEventHandler: Send + Sync {
-    async fn handle_mint(&mut self, mint: NftMintEvent, context: EventContext);
+    async fn handle_mint(&mut self, mint: ExtendedNftMintEvent, context: EventContext);
     async fn handle_transfer(&mut self, transfer: ExtendedNftTransferEvent, context: EventContext);
-    async fn handle_burn(&mut self, burn: NftBurnEvent, context: EventContext);
+    async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext);
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ExtendedNftMintEvent {
+    #[serde(flatten)]
+    pub event: NftMintEvent,
+}
+
+impl ExtendedNftMintEvent {
+    pub fn from_event(event: NftMintEvent) -> Self {
+        ExtendedNftMintEvent { event }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ExtendedNftTransferEvent {
+    #[serde(flatten)]
     pub event: NftTransferEvent,
+    #[serde(flatten)]
     pub trade: NftTradeDetails,
 }
 
@@ -65,7 +79,7 @@ impl ExtendedNftTransferEvent {
         ExtendedNftTransferEvent {
             event,
             trade: NftTradeDetails {
-                prices_near: prices,
+                token_prices_near: prices,
             },
         }
     }
@@ -75,7 +89,19 @@ impl ExtendedNftTransferEvent {
 pub struct NftTradeDetails {
     /// None if it's a simple transfer, Some if it's a trade. Guaranteed to have the same length as NftTransferEvent::token_ids
     #[serde(with = "dec_format_vec")]
-    pub prices_near: Vec<Option<Balance>>,
+    pub token_prices_near: Vec<Option<Balance>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ExtendedNftBurnEvent {
+    #[serde(flatten)]
+    pub event: NftBurnEvent,
+}
+
+impl ExtendedNftBurnEvent {
+    pub fn from_event(event: NftBurnEvent) -> Self {
+        ExtendedNftBurnEvent { event }
+    }
 }
 
 #[allow(dead_code)]
@@ -134,7 +160,7 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                     if mint_log.validate() {
                         log::debug!("Mint log: {mint_log:?}");
                         for mint in mint_log.data.0 {
-                            self.0.handle_mint(mint, get_context_lazy()).await;
+                            self.0.handle_mint(ExtendedNftMintEvent::from_event(mint), get_context_lazy()).await;
                         }
                     }
                 }
@@ -155,7 +181,7 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                     if burn_log.validate() {
                         log::debug!("Burn log: {burn_log:?}");
                         for burn in burn_log.data.0 {
-                            self.0.handle_burn(burn, get_context_lazy()).await;
+                            self.0.handle_burn(ExtendedNftBurnEvent::from_event(burn), get_context_lazy()).await;
                         }
                     }
                 }

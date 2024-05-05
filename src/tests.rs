@@ -9,18 +9,19 @@ use inindexer::{
 };
 
 use nft_indexer::{
-    EventContext, ExtendedNftTransferEvent, NftEventHandler, NftIndexer, NftTradeDetails,
+    EventContext, ExtendedNftBurnEvent, ExtendedNftMintEvent, ExtendedNftTransferEvent,
+    NftEventHandler, NftIndexer, NftTradeDetails,
 };
 
 #[tokio::test]
 async fn detects_mints() {
     struct TestHandler {
-        mint_events: HashMap<AccountId, Vec<(NftMintEvent, EventContext)>>,
+        mint_events: HashMap<AccountId, Vec<(ExtendedNftMintEvent, EventContext)>>,
     }
 
     #[async_trait]
     impl NftEventHandler for TestHandler {
-        async fn handle_mint(&mut self, mint: NftMintEvent, context: EventContext) {
+        async fn handle_mint(&mut self, mint: ExtendedNftMintEvent, context: EventContext) {
             self.mint_events
                 .entry(context.tx_sender_id.clone())
                 .or_insert_with(Vec::new)
@@ -34,7 +35,7 @@ async fn detects_mints() {
         ) {
         }
 
-        async fn handle_burn(&mut self, _burn: NftBurnEvent, _context: EventContext) {}
+        async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
     }
 
     let handler = TestHandler {
@@ -65,10 +66,12 @@ async fn detects_mints() {
             .get(&"minter1.sharddog.near".parse::<AccountId>().unwrap())
             .unwrap(),
         vec![(
-            NftMintEvent {
-                owner_id: "slimedragon.near".parse().unwrap(),
-                token_ids: vec!["19:23".to_owned()],
-                memo: None
+            ExtendedNftMintEvent {
+                event: NftMintEvent {
+                    owner_id: "slimedragon.near".parse().unwrap(),
+                    token_ids: vec!["19:23".to_owned()],
+                    memo: None
+                }
             },
             EventContext {
                 transaction_id: "9TkiwECEL4AMsA6KmuhGskkNFT5Mr6ub6YJJAza8vbGs"
@@ -88,12 +91,12 @@ async fn detects_mints() {
 #[tokio::test]
 async fn detects_transfers() {
     struct TestHandler {
-        transfer_events: HashMap<AccountId, Vec<(NftTransferEvent, EventContext)>>,
+        transfer_events: HashMap<AccountId, Vec<(ExtendedNftTransferEvent, EventContext)>>,
     }
 
     #[async_trait]
     impl NftEventHandler for TestHandler {
-        async fn handle_mint(&mut self, _mint: NftMintEvent, _context: EventContext) {}
+        async fn handle_mint(&mut self, _mint: ExtendedNftMintEvent, _context: EventContext) {}
 
         async fn handle_transfer(
             &mut self,
@@ -104,10 +107,10 @@ async fn detects_transfers() {
                 .transfer_events
                 .entry(context.tx_sender_id.clone())
                 .or_insert_with(Vec::new);
-            entry.push((transfer.event, context));
+            entry.push((transfer, context));
         }
 
-        async fn handle_burn(&mut self, _burn: NftBurnEvent, _context: EventContext) {}
+        async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
     }
 
     let handler = TestHandler {
@@ -138,12 +141,17 @@ async fn detects_transfers() {
             .get(&"slimegirl.near".parse::<AccountId>().unwrap())
             .unwrap(),
         vec![(
-            NftTransferEvent {
-                authorized_id: None,
-                old_owner_id: "slimegirl.near".parse().unwrap(),
-                new_owner_id: "tattothetoo.near".parse().unwrap(),
-                token_ids: vec!["504983:1".to_owned()],
-                memo: None
+            ExtendedNftTransferEvent {
+                event: NftTransferEvent {
+                    authorized_id: None,
+                    old_owner_id: "slimegirl.near".parse().unwrap(),
+                    new_owner_id: "tattothetoo.near".parse().unwrap(),
+                    token_ids: vec!["504983:1".to_owned()],
+                    memo: None
+                },
+                trade: NftTradeDetails {
+                    token_prices_near: vec![None],
+                }
             },
             EventContext {
                 transaction_id: "95HkmF7ajYPSSJnhsGL7C4k8sF5jmdrp4ciiTcK7xuYr"
@@ -163,12 +171,12 @@ async fn detects_transfers() {
 #[tokio::test]
 async fn detects_burns() {
     struct TestHandler {
-        burn_events: HashMap<AccountId, Vec<(NftBurnEvent, EventContext)>>,
+        burn_events: HashMap<AccountId, Vec<(ExtendedNftBurnEvent, EventContext)>>,
     }
 
     #[async_trait]
     impl NftEventHandler for TestHandler {
-        async fn handle_mint(&mut self, _mint: NftMintEvent, _context: EventContext) {}
+        async fn handle_mint(&mut self, _mint: ExtendedNftMintEvent, _context: EventContext) {}
 
         async fn handle_transfer(
             &mut self,
@@ -177,7 +185,7 @@ async fn detects_burns() {
         ) {
         }
 
-        async fn handle_burn(&mut self, burn: NftBurnEvent, context: EventContext) {
+        async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext) {
             self.burn_events
                 .entry(context.tx_sender_id.clone())
                 .or_insert_with(Vec::new)
@@ -213,11 +221,13 @@ async fn detects_burns() {
             .get(&"bonehedz.near".parse::<AccountId>().unwrap())
             .unwrap(),
         vec![(
-            NftBurnEvent {
-                owner_id: "bonehedz.near".parse().unwrap(),
-                authorized_id: None,
-                token_ids: vec!["1454".to_owned()],
-                memo: None
+            ExtendedNftBurnEvent {
+                event: NftBurnEvent {
+                    owner_id: "bonehedz.near".parse().unwrap(),
+                    authorized_id: None,
+                    token_ids: vec!["1454".to_owned()],
+                    memo: None
+                }
             },
             EventContext {
                 transaction_id: "9k7kE7PU1YqrAxzdwKw8P3u8eNeazCZpMWStD89XFBpZ"
@@ -242,7 +252,7 @@ async fn detects_paras_trade() {
 
     #[async_trait]
     impl NftEventHandler for TestHandler {
-        async fn handle_mint(&mut self, _mint: NftMintEvent, _context: EventContext) {}
+        async fn handle_mint(&mut self, _mint: ExtendedNftMintEvent, _context: EventContext) {}
 
         async fn handle_transfer(
             &mut self,
@@ -256,7 +266,7 @@ async fn detects_paras_trade() {
             entry.push((transfer, context));
         }
 
-        async fn handle_burn(&mut self, _burn: NftBurnEvent, _context: EventContext) {}
+        async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
     }
 
     let handler = TestHandler {
@@ -299,7 +309,7 @@ async fn detects_paras_trade() {
                     memo: None,
                 },
                 trade: NftTradeDetails {
-                    prices_near: vec![Some(790000000000000000000000)],
+                    token_prices_near: vec![Some(790000000000000000000000)],
                 }
             },
             EventContext {
@@ -325,7 +335,7 @@ async fn detects_mintbase_trade() {
 
     #[async_trait]
     impl NftEventHandler for TestHandler {
-        async fn handle_mint(&mut self, _mint: NftMintEvent, _context: EventContext) {}
+        async fn handle_mint(&mut self, _mint: ExtendedNftMintEvent, _context: EventContext) {}
 
         async fn handle_transfer(
             &mut self,
@@ -339,7 +349,7 @@ async fn detects_mintbase_trade() {
             entry.push((transfer, context));
         }
 
-        async fn handle_burn(&mut self, _burn: NftBurnEvent, _context: EventContext) {}
+        async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
     }
 
     let handler = TestHandler {
@@ -382,7 +392,7 @@ async fn detects_mintbase_trade() {
                     memo: None
                 },
                 trade: NftTradeDetails {
-                    prices_near: vec![Some(2925000000000000000000000)]
+                    token_prices_near: vec![Some(2925000000000000000000000)]
                 }
             },
             EventContext {
