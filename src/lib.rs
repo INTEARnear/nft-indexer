@@ -4,7 +4,7 @@ pub mod redis_handler;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use inindexer::near_indexer_primitives::types::{AccountId, Balance};
+use inindexer::near_indexer_primitives::types::{AccountId, Balance, BlockHeight};
 use inindexer::near_indexer_primitives::views::{ActionView, ExecutionStatusView, ReceiptEnumView};
 use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
@@ -142,10 +142,12 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
             let transaction_id = transaction.transaction.transaction.hash;
             let receipt_id = receipt.receipt.receipt.receipt_id;
             let block_height = receipt.block_height;
+            let block_timestamp_nanosec = receipt.block_timestamp_nanosec;
             EventContext {
                 transaction_id,
                 receipt_id,
                 block_height,
+                block_timestamp_nanosec,
                 tx_sender_id,
                 contract_id,
             }
@@ -160,7 +162,12 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                     if mint_log.validate() {
                         log::debug!("Mint log: {mint_log:?}");
                         for mint in mint_log.data.0 {
-                            self.0.handle_mint(ExtendedNftMintEvent::from_event(mint), get_context_lazy()).await;
+                            self.0
+                                .handle_mint(
+                                    ExtendedNftMintEvent::from_event(mint),
+                                    get_context_lazy(),
+                                )
+                                .await;
                         }
                     }
                 }
@@ -181,7 +188,12 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                     if burn_log.validate() {
                         log::debug!("Burn log: {burn_log:?}");
                         for burn in burn_log.data.0 {
-                            self.0.handle_burn(ExtendedNftBurnEvent::from_event(burn), get_context_lazy()).await;
+                            self.0
+                                .handle_burn(
+                                    ExtendedNftBurnEvent::from_event(burn),
+                                    get_context_lazy(),
+                                )
+                                .await;
                         }
                     }
                 }
@@ -195,7 +207,9 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
 pub struct EventContext {
     pub transaction_id: CryptoHash,
     pub receipt_id: CryptoHash,
-    pub block_height: u64,
+    pub block_height: BlockHeight,
+    #[serde(with = "dec_format")]
+    pub block_timestamp_nanosec: u128,
     pub tx_sender_id: AccountId,
     pub contract_id: AccountId,
 }

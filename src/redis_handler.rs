@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use redis::{streams::StreamMaxlen, AsyncCommands};
 
-use crate::{EventContext, ExtendedNftBurnEvent, ExtendedNftMintEvent, ExtendedNftTransferEvent, NftEventHandler};
+use crate::{
+    EventContext, ExtendedNftBurnEvent, ExtendedNftMintEvent, ExtendedNftTransferEvent,
+    NftEventHandler,
+};
 
 pub struct PushToRedisStream<C: AsyncCommands + Sync> {
     connection: C,

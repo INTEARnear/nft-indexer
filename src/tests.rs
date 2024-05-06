@@ -81,6 +81,7 @@ async fn detects_mints() {
                     .parse()
                     .unwrap(),
                 block_height: 117189144,
+                block_timestamp_nanosec: 1713553179034135476,
                 tx_sender_id: "minter1.sharddog.near".parse().unwrap(),
                 contract_id: "claim.sharddog.near".parse().unwrap()
             }
@@ -161,6 +162,7 @@ async fn detects_transfers() {
                     .parse()
                     .unwrap(),
                 block_height: 117_487_094,
+                block_timestamp_nanosec: 1713920604063293990,
                 tx_sender_id: "slimegirl.near".parse().unwrap(),
                 contract_id: "x.paras.near".parse().unwrap()
             }
@@ -237,6 +239,7 @@ async fn detects_burns() {
                     .parse()
                     .unwrap(),
                 block_height: 117752572,
+                block_timestamp_nanosec: 1714240014556084087,
                 tx_sender_id: "bonehedz.near".parse().unwrap(),
                 contract_id: "veganfriends.mintbase1.near".parse().unwrap()
             }
@@ -320,6 +323,7 @@ async fn detects_paras_trade() {
                     .parse()
                     .unwrap(),
                 block_height: 117998765,
+                block_timestamp_nanosec: 1714543285352206574,
                 tx_sender_id: "marketplace.paras.near".parse().unwrap(),
                 contract_id: "x.paras.near".parse().unwrap(),
             }
@@ -403,6 +407,7 @@ async fn detects_mintbase_trade() {
                     .parse()
                     .unwrap(),
                 block_height: 116934526,
+                block_timestamp_nanosec: 1713231344389999053,
                 tx_sender_id: "simple.market.mintbase1.near".parse().unwrap(),
                 contract_id: "beanlabs.mintbase1.near".parse().unwrap()
             }
