@@ -8,11 +8,11 @@ use inindexer::near_indexer_primitives::views::{ActionView, ExecutionStatusView,
 use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::{
-    dec_format, dec_format_map, dec_format_vec, EventLogData, NftBurnEvent, NftBurnLog,
-    NftMintEvent, NftMintLog, NftTransferEvent, NftTransferLog,
+    dec_format, dec_format_map, EventLogData, NftBurnEvent, NftBurnLog, NftMintEvent, NftMintLog,
+    NftTransferEvent, NftTransferLog,
 };
 use inindexer::{IncompleteTransaction, Indexer, TransactionReceipt};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[async_trait]
 pub trait NftEventHandler: Send + Sync {
@@ -21,9 +21,8 @@ pub trait NftEventHandler: Send + Sync {
     async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext);
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ExtendedNftMintEvent {
-    #[serde(flatten)]
     pub event: NftMintEvent,
 }
 
@@ -33,11 +32,9 @@ impl ExtendedNftMintEvent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ExtendedNftTransferEvent {
-    #[serde(flatten)]
     pub event: NftTransferEvent,
-    #[serde(flatten)]
     pub trade: NftTradeDetails,
 }
 
@@ -84,16 +81,13 @@ impl ExtendedNftTransferEvent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct NftTradeDetails {
     /// None if it's a simple transfer, Some if it's a trade. Guaranteed to have the same length as NftTransferEvent::token_ids
-    #[serde(with = "dec_format_vec")]
     pub token_prices_near: Vec<Option<Balance>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ExtendedNftBurnEvent {
-    #[serde(flatten)]
     pub event: NftBurnEvent,
 }
 
@@ -202,12 +196,11 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EventContext {
     pub transaction_id: CryptoHash,
     pub receipt_id: CryptoHash,
     pub block_height: BlockHeight,
-    #[serde(with = "dec_format")]
     pub block_timestamp_nanosec: u128,
     pub tx_sender_id: AccountId,
     pub contract_id: AccountId,
