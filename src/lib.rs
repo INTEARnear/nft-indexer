@@ -1,4 +1,3 @@
-#[cfg(feature = "redis-handler")]
 pub mod redis_handler;
 
 use std::collections::HashMap;

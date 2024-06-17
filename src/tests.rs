@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use inindexer::{
-    fastnear_data_server::FastNearDataServerProvider,
     near_indexer_primitives::types::AccountId,
     near_utils::{NftBurnEvent, NftMintEvent, NftTransferEvent},
+    neardata_server::NeardataServerProvider,
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 
@@ -46,7 +46,7 @@ async fn detects_mints() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_189_143..=117_189_146),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -122,7 +122,7 @@ async fn detects_transfers() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_487_093..=117_487_095),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -203,7 +203,7 @@ async fn detects_burns() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_752_571..=117_752_573),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -280,7 +280,7 @@ async fn detects_paras_trade() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_998_763..=117_998_773),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -364,7 +364,7 @@ async fn detects_mintbase_trade() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(116_934_524..=116_934_529),
             preprocess_transactions: Some(PreprocessTransactionsSettings {

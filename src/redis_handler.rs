@@ -1,78 +1,94 @@
 use async_trait::async_trait;
-use redis::{streams::StreamMaxlen, AsyncCommands};
+use inevents_redis::RedisEventStream;
+use intear_events::events::nft::{
+    nft_burn::NftBurnEventData, nft_mint::NftMintEventData, nft_transfer::NftTransferEventData,
+};
+use redis::aio::ConnectionManager;
 
 use crate::{
     EventContext, ExtendedNftBurnEvent, ExtendedNftMintEvent, ExtendedNftTransferEvent,
     NftEventHandler,
 };
 
-pub struct PushToRedisStream<C: AsyncCommands + Sync> {
-    connection: C,
+pub struct PushToRedisStream {
+    mint_stream: RedisEventStream<NftMintEventData>,
+    transfer_stream: RedisEventStream<NftTransferEventData>,
+    burn_stream: RedisEventStream<NftBurnEventData>,
     max_stream_size: usize,
 }
 
-impl<C: AsyncCommands + Sync> PushToRedisStream<C> {
-    pub fn new(connection: C, max_stream_size: usize) -> Self {
+impl PushToRedisStream {
+    pub async fn new(connection: ConnectionManager, max_stream_size: usize) -> Self {
         Self {
-            connection,
+            mint_stream: RedisEventStream::new(connection.clone(), "nft_mint").await,
+            transfer_stream: RedisEventStream::new(connection.clone(), "nft_transfer").await,
+            burn_stream: RedisEventStream::new(connection.clone(), "nft_burn").await,
             max_stream_size,
         }
     }
 }
 
 #[async_trait]
-impl<C: AsyncCommands + Sync> NftEventHandler for PushToRedisStream<C> {
+impl NftEventHandler for PushToRedisStream {
     async fn handle_mint(&mut self, mint: ExtendedNftMintEvent, context: EventContext) {
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "nft_mint",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    ("mint", serde_json::to_string(&mint).unwrap().as_str()),
-                    ("context", serde_json::to_string(&context).unwrap().as_str()),
-                ],
+        self.mint_stream
+            .emit_event(
+                context.block_height,
+                NftMintEventData {
+                    owner_id: mint.event.owner_id,
+                    token_ids: mint.event.token_ids,
+                    memo: mint.event.memo,
+                    transaction_id: context.transaction_id,
+                    receipt_id: context.receipt_id,
+                    block_height: context.block_height,
+                    block_timestamp_nanosec: context.block_timestamp_nanosec,
+                    contract_id: context.contract_id,
+                },
+                self.max_stream_size,
             )
             .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
+            .expect("Failed to emit mint event");
     }
 
     async fn handle_transfer(&mut self, transfer: ExtendedNftTransferEvent, context: EventContext) {
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "nft_transfer",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    (
-                        "transfer",
-                        serde_json::to_string(&transfer).unwrap().as_str(),
-                    ),
-                    ("context", serde_json::to_string(&context).unwrap().as_str()),
-                ],
+        self.transfer_stream
+            .emit_event(
+                context.block_height,
+                NftTransferEventData {
+                    old_owner_id: transfer.event.old_owner_id,
+                    new_owner_id: transfer.event.new_owner_id,
+                    token_ids: transfer.event.token_ids,
+                    memo: transfer.event.memo,
+                    token_prices_near: transfer.trade.token_prices_near,
+                    transaction_id: context.transaction_id,
+                    receipt_id: context.receipt_id,
+                    block_height: context.block_height,
+                    block_timestamp_nanosec: context.block_timestamp_nanosec,
+                    contract_id: context.contract_id,
+                },
+                self.max_stream_size,
             )
             .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
+            .expect("Failed to emit transfer event");
     }
 
     async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext) {
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "nft_burn",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    ("burn", serde_json::to_string(&burn).unwrap().as_str()),
-                    ("context", serde_json::to_string(&context).unwrap().as_str()),
-                ],
+        self.burn_stream
+            .emit_event(
+                context.block_height,
+                NftBurnEventData {
+                    owner_id: burn.event.owner_id,
+                    token_ids: burn.event.token_ids,
+                    memo: burn.event.memo,
+                    transaction_id: context.transaction_id,
+                    receipt_id: context.receipt_id,
+                    block_height: context.block_height,
+                    block_timestamp_nanosec: context.block_timestamp_nanosec,
+                    contract_id: context.contract_id,
+                },
+                self.max_stream_size,
             )
             .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
+            .expect("Failed to emit burn event");
     }
 }
