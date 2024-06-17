@@ -87,6 +87,7 @@ pub struct NftTradeDetails {
     pub token_prices_near: Vec<Option<Balance>>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct ExtendedNftBurnEvent {
     pub event: NftBurnEvent,
 }
