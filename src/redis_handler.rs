@@ -20,9 +20,9 @@ pub struct PushToRedisStream {
 impl PushToRedisStream {
     pub async fn new(connection: ConnectionManager, max_stream_size: usize) -> Self {
         Self {
-            mint_stream: RedisEventStream::new(connection.clone(), "nft_mint").await,
-            transfer_stream: RedisEventStream::new(connection.clone(), "nft_transfer").await,
-            burn_stream: RedisEventStream::new(connection.clone(), "nft_burn").await,
+            mint_stream: RedisEventStream::new(connection.clone(), "nft_mint"),
+            transfer_stream: RedisEventStream::new(connection.clone(), "nft_transfer"),
+            burn_stream: RedisEventStream::new(connection.clone(), "nft_burn"),
             max_stream_size,
         }
     }
@@ -46,7 +46,6 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit mint event");
     }
 
@@ -68,7 +67,6 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit transfer event");
     }
 
@@ -88,7 +86,6 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit burn event");
     }
 }
