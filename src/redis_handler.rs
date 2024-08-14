@@ -46,6 +46,7 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit mint event");
     }
 
@@ -67,6 +68,7 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit transfer event");
     }
 
@@ -86,6 +88,7 @@ impl NftEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit burn event");
     }
 }
