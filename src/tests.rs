@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use inindexer::{
-    near_indexer_primitives::types::AccountId,
+    near_indexer_primitives::types::{AccountId, BlockHeight},
     near_utils::{NftBurnEvent, NftMintEvent, NftTransferEvent},
-    neardata_server::NeardataServerProvider,
+    neardata::NeardataProvider,
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 
@@ -36,6 +36,8 @@ async fn detects_mints() {
         }
 
         async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -46,7 +48,7 @@ async fn detects_mints() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_189_143..=117_189_146),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -112,6 +114,8 @@ async fn detects_transfers() {
         }
 
         async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -122,7 +126,7 @@ async fn detects_transfers() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_487_093..=117_487_095),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -193,6 +197,8 @@ async fn detects_burns() {
                 .or_insert_with(Vec::new)
                 .push((burn, context));
         }
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -203,7 +209,7 @@ async fn detects_burns() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_752_571..=117_752_573),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -270,6 +276,8 @@ async fn detects_paras_trade() {
         }
 
         async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -280,7 +288,7 @@ async fn detects_paras_trade() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(117_998_763..=117_998_773),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -354,6 +362,8 @@ async fn detects_mintbase_trade() {
         }
 
         async fn handle_burn(&mut self, _burn: ExtendedNftBurnEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -364,7 +374,7 @@ async fn detects_mintbase_trade() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(116_934_524..=116_934_529),
             preprocess_transactions: Some(PreprocessTransactionsSettings {

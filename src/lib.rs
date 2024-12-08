@@ -19,6 +19,9 @@ pub trait NftEventHandler: Send + Sync {
     async fn handle_mint(&mut self, mint: ExtendedNftMintEvent, context: EventContext);
     async fn handle_transfer(&mut self, transfer: ExtendedNftTransferEvent, context: EventContext);
     async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext);
+
+    /// Called after each block
+    async fn flush_events(&mut self, block_height: BlockHeight);
 }
 
 #[derive(Debug, PartialEq)]
@@ -193,6 +196,11 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                 }
             }
         }
+        Ok(())
+    }
+
+    async fn process_block_end(&mut self, block: &StreamerMessage) -> Result<(), Self::Error> {
+        self.0.flush_events(block.block.header.height).await;
         Ok(())
     }
 }
