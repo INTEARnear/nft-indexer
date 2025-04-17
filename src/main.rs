@@ -3,7 +3,7 @@ mod tests;
 
 use inindexer::neardata::NeardataProvider;
 use inindexer::{
-    run_indexer, AutoContinue, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
+    run_indexer, AutoContinue, BlockRange, IndexerOptions, PreprocessTransactionsSettings,
 };
 use nft_indexer::redis_handler;
 use redis::aio::ConnectionManager;
@@ -30,31 +30,32 @@ async fn main() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: if std::env::args().len() > 1 {
+            preprocess_transactions: Some(PreprocessTransactionsSettings {
+                prefetch_blocks: if cfg!(debug_assertions) { 0 } else { 100 },
+                postfetch_blocks: 0,
+            }),
+            ..IndexerOptions::default_with_range(if std::env::args().len() > 1 {
                 // For debugging
-                let msg = "Usage: `nft-indexer` or `nft-indexer [start-block] [end-block]`";
-                BlockIterator::iterator(
-                    std::env::args()
+                let msg = "Usage: `indexer` or `indexer [start-block] [end-block]`";
+                BlockRange::Range {
+                    start_inclusive: std::env::args()
                         .nth(1)
                         .expect(msg)
                         .replace(['_', ',', ' ', '.'], "")
                         .parse()
-                        .expect(msg)
-                        ..=std::env::args()
+                        .expect(msg),
+                    end_exclusive: Some(
+                        std::env::args()
                             .nth(2)
                             .expect(msg)
                             .replace(['_', ',', ' ', '.'], "")
                             .parse()
                             .expect(msg),
-                )
+                    ),
+                }
             } else {
-                BlockIterator::AutoContinue(AutoContinue::default())
-            },
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: if cfg!(debug_assertions) { 0 } else { 100 },
-                postfetch_blocks: 0,
-            }),
-            ..Default::default()
+                BlockRange::AutoContinue(AutoContinue::default())
+            })
         },
     )
     .await

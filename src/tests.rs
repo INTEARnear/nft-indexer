@@ -5,7 +5,7 @@ use inindexer::{
     near_indexer_primitives::types::{AccountId, BlockHeight},
     near_utils::{NftBurnEvent, NftMintEvent, NftTransferEvent},
     neardata::NeardataProvider,
-    run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
+    run_indexer, BlockRange, IndexerOptions, PreprocessTransactionsSettings,
 };
 
 use nft_indexer::{
@@ -50,12 +50,14 @@ async fn detects_mints() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(117_189_143..=117_189_146),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
                 prefetch_blocks: 0,
                 postfetch_blocks: 0,
             }),
-            ..Default::default()
+            ..IndexerOptions::default_with_range(BlockRange::Range {
+                start_inclusive: 117_189_143,
+                end_exclusive: Some(117_189_146),
+            })
         },
     )
     .await
@@ -128,12 +130,14 @@ async fn detects_transfers() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(117_487_093..=117_487_095),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
                 prefetch_blocks: 0,
                 postfetch_blocks: 0,
             }),
-            ..Default::default()
+            ..IndexerOptions::default_with_range(BlockRange::Range {
+                start_inclusive: 117_487_093,
+                end_exclusive: Some(117_487_095),
+            })
         },
     )
     .await
@@ -211,12 +215,14 @@ async fn detects_burns() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(117_752_571..=117_752_573),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
                 prefetch_blocks: 0,
                 postfetch_blocks: 0,
             }),
-            ..Default::default()
+            ..IndexerOptions::default_with_range(BlockRange::Range {
+                start_inclusive: 117_752_571,
+                end_exclusive: Some(117_752_573),
+            })
         },
     )
     .await
@@ -290,12 +296,14 @@ async fn detects_paras_trade() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(117_998_763..=117_998_773),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
                 prefetch_blocks: 0,
                 postfetch_blocks: 0,
             }),
-            ..Default::default()
+            ..IndexerOptions::default_with_range(BlockRange::Range {
+                start_inclusive: 117_998_763,
+                end_exclusive: Some(117_998_773),
+            })
         },
     )
     .await
@@ -376,12 +384,14 @@ async fn detects_mintbase_trade() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            range: BlockIterator::iterator(116_934_524..=116_934_529),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
                 prefetch_blocks: 0,
                 postfetch_blocks: 0,
             }),
-            ..Default::default()
+            ..IndexerOptions::default_with_range(BlockRange::Range {
+                start_inclusive: 116_934_524,
+                end_exclusive: Some(116_934_529),
+            })
         },
     )
     .await
