@@ -3,13 +3,13 @@ pub mod redis_handler;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use inindexer::near_indexer_primitives::types::{AccountId, Balance, BlockHeight};
+use inindexer::near_indexer_primitives::types::{AccountId, BlockHeight};
 use inindexer::near_indexer_primitives::views::{ActionView, ExecutionStatusView, ReceiptEnumView};
 use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::{
-    dec_format, dec_format_map, EventLogData, NftBurnEvent, NftBurnLog, NftMintEvent, NftMintLog,
-    NftTransferEvent, NftTransferLog,
+    dec_format, dec_format_map, EventLogData, FtBalance, NftBurnEvent, NftBurnLog, NftMintEvent,
+    NftMintLog, NftTransferEvent, NftTransferLog,
 };
 use inindexer::{IncompleteTransaction, Indexer, TransactionReceipt};
 use serde::Deserialize;
@@ -65,7 +65,7 @@ impl ExtendedNftTransferEvent {
                                         serde_json::from_slice::<PayoutResponse>(value)
                                     {
                                         // Is this always the same as args.balance?
-                                        let price = payout.payout.values().sum::<Balance>();
+                                        let price = payout.payout.values().sum::<FtBalance>();
                                         prices[index] = Some(price);
                                     }
                                 }
@@ -87,7 +87,7 @@ impl ExtendedNftTransferEvent {
 #[derive(Debug, PartialEq)]
 pub struct NftTradeDetails {
     /// None if it's a simple transfer, Some if it's a trade. Guaranteed to have the same length as NftTransferEvent::token_ids
-    pub token_prices_near: Vec<Option<Balance>>,
+    pub token_prices_near: Vec<Option<FtBalance>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -110,7 +110,7 @@ struct NftTransferPayoutArgs {
     approval_id: Option<u64>,
     memo: Option<String>,
     #[serde(with = "dec_format")]
-    balance: Balance,
+    balance: FtBalance,
     max_len_payout: Option<u32>,
 }
 
@@ -118,7 +118,7 @@ struct NftTransferPayoutArgs {
 #[derive(Deserialize, Debug)]
 struct PayoutResponse {
     #[serde(with = "dec_format_map")]
-    payout: HashMap<AccountId, Balance>,
+    payout: HashMap<AccountId, FtBalance>,
 }
 
 pub struct NftIndexer<T: NftEventHandler + Send + Sync + 'static>(pub T);
