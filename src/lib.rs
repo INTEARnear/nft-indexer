@@ -6,12 +6,12 @@ use async_trait::async_trait;
 use inindexer::near_indexer_primitives::types::{AccountId, BlockHeight};
 use inindexer::near_indexer_primitives::views::{ActionView, ExecutionStatusView, ReceiptEnumView};
 use inindexer::near_indexer_primitives::CryptoHash;
-use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::{
-    dec_format, dec_format_map, EventLogData, FtBalance, NftBurnEvent, NftBurnLog, NftMintEvent,
-    NftMintLog, NftTransferEvent, NftTransferLog,
+    dec_format, dec_format_map, is_receipt_successful, EventLogData, FtBalance, NftBurnEvent,
+    NftBurnLog, NftMintEvent, NftMintLog, NftTransferEvent, NftTransferLog,
 };
-use inindexer::{IncompleteTransaction, Indexer, TransactionReceipt};
+use inindexer::transaction_trees::{ExecutedReceipt, TransactionTree};
+use inindexer::{Indexer, IndexerExecutionOutcomeWithReceipt, StreamerMessage};
 use serde::Deserialize;
 
 #[async_trait]
@@ -42,7 +42,7 @@ pub struct ExtendedNftTransferEvent {
 }
 
 impl ExtendedNftTransferEvent {
-    pub fn from_event(event: NftTransferEvent, receipt: &TransactionReceipt) -> Self {
+    pub fn from_event(event: NftTransferEvent, receipt: &ExecutedReceipt) -> Self {
         let mut prices = vec![None; event.token_ids.len()];
         if let ReceiptEnumView::Action { actions, .. } = &receipt.receipt.receipt.receipt {
             for action in actions {
@@ -127,12 +127,15 @@ pub struct NftIndexer<T: NftEventHandler + Send + Sync + 'static>(pub T);
 impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
     type Error = String;
 
-    async fn on_receipt(
+    async fn process_receipt(
         &mut self,
-        receipt: &TransactionReceipt,
-        transaction: &IncompleteTransaction,
+        receipt: &IndexerExecutionOutcomeWithReceipt,
+        transaction: &TransactionTree,
         _block: &StreamerMessage,
     ) -> Result<(), Self::Error> {
+        let receipt = transaction
+            .receipt(&receipt.receipt.receipt_id)
+            .expect("The tree has the receipts of the block it comes with");
         let get_context_lazy = || {
             let tx_sender_id = receipt.receipt.receipt.predecessor_id.clone();
             let contract_id = receipt.receipt.receipt.receiver_id.clone();
@@ -149,7 +152,7 @@ impl<T: NftEventHandler + Send + Sync + 'static> Indexer for NftIndexer<T> {
                 contract_id,
             }
         };
-        if receipt.is_successful(false) {
+        if is_receipt_successful(&receipt.receipt) == Some(true) {
             for log in &receipt.receipt.execution_outcome.outcome.logs {
                 if !log.contains("nep171") {
                     // Don't even start parsing logs if they don't even contain the NEP-171 standard

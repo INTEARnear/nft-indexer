@@ -5,7 +5,7 @@ use inindexer::{
     near_indexer_primitives::types::{AccountId, BlockHeight},
     near_utils::{NftBurnEvent, NftMintEvent, NftTransferEvent},
     neardata::NeardataProvider,
-    run_indexer, BlockRange, IndexerOptions, PreprocessTransactionsSettings,
+    run_indexer, BlockRange, IndexerOptions,
 };
 
 use nft_indexer::{
@@ -24,7 +24,7 @@ async fn detects_mints() {
         async fn handle_mint(&mut self, mint: ExtendedNftMintEvent, context: EventContext) {
             self.mint_events
                 .entry(context.tx_sender_id.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push((mint, context));
         }
 
@@ -50,10 +50,7 @@ async fn detects_mints() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 117_189_143,
                 end_exclusive: Some(117_189_146),
@@ -111,7 +108,7 @@ async fn detects_transfers() {
             let entry = self
                 .transfer_events
                 .entry(context.tx_sender_id.clone())
-                .or_insert_with(Vec::new);
+                .or_default();
             entry.push((transfer, context));
         }
 
@@ -130,10 +127,7 @@ async fn detects_transfers() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 117_487_093,
                 end_exclusive: Some(117_487_095),
@@ -198,7 +192,7 @@ async fn detects_burns() {
         async fn handle_burn(&mut self, burn: ExtendedNftBurnEvent, context: EventContext) {
             self.burn_events
                 .entry(context.tx_sender_id.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push((burn, context));
         }
 
@@ -215,10 +209,7 @@ async fn detects_burns() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 117_752_571,
                 end_exclusive: Some(117_752_573),
@@ -277,7 +268,7 @@ async fn detects_paras_trade() {
             let entry = self
                 .transfer_events
                 .entry(context.tx_sender_id.clone())
-                .or_insert_with(Vec::new);
+                .or_default();
             entry.push((transfer, context));
         }
 
@@ -296,10 +287,7 @@ async fn detects_paras_trade() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 117_998_763,
                 end_exclusive: Some(117_998_773),
@@ -365,7 +353,7 @@ async fn detects_mintbase_trade() {
             let entry = self
                 .transfer_events
                 .entry(context.tx_sender_id.clone())
-                .or_insert_with(Vec::new);
+                .or_default();
             entry.push((transfer, context));
         }
 
@@ -384,10 +372,7 @@ async fn detects_mintbase_trade() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 116_934_524,
                 end_exclusive: Some(116_934_529),
